@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.edge.AlarmUpdateMsg;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
@@ -58,6 +58,8 @@ public class AlarmMsgConstructor {
         }
         AlarmUpdateMsg.Builder builder = AlarmUpdateMsg.newBuilder()
                 .setMsgType(msgType)
+                .setIdMSB(alarm.getId().getId().getMostSignificantBits())
+                .setIdLSB(alarm.getId().getId().getLeastSignificantBits())
                 .setName(alarm.getName())
                 .setType(alarm.getType())
                 .setOriginatorName(entityName)
@@ -69,7 +71,9 @@ public class AlarmMsgConstructor {
                 .setAckTs(alarm.getAckTs())
                 .setClearTs(alarm.getClearTs())
                 .setDetails(JacksonUtil.toString(alarm.getDetails()))
-                .setPropagate(alarm.isPropagate());
+                .setPropagate(alarm.isPropagate())
+                .setPropagateToOwner(alarm.isPropagateToOwner())
+                .setPropagateToTenant(alarm.isPropagateToTenant());
         return builder.build();
     }
 

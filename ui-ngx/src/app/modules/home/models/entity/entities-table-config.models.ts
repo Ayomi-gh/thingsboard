@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,18 +26,20 @@ import { Type } from '@angular/core';
 import { EntityAction } from './entity-component.models';
 import { HasUUID } from '@shared/models/id/has-uuid';
 import { PageLink } from '@shared/models/page/page-link';
-import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
 import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
 import { ActivatedRoute } from '@angular/router';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { DAY, historyInterval } from '@shared/models/time/time.models';
+import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
+import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
+import { templateJitUrl } from '@angular/compiler';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
 export type EntityVoidFunction<T extends BaseData<HasId>> = (entity: T) => void;
 export type EntityIdsVoidFunction<T extends BaseData<HasId>> = (ids: HasUUID[]) => void;
 export type EntityCountStringFunction = (count: number) => string;
-export type EntityTwoWayOperation<T extends BaseData<HasId>> = (entity: T) => Observable<T>;
+export type EntityTwoWayOperation<T extends BaseData<HasId>> = (entity: T, originalEntity?: T) => Observable<T>;
 export type EntityByIdOperation<T extends BaseData<HasId>> = (id: HasUUID) => Observable<T>;
 export type EntityIdOneWayOperation = (id: HasUUID) => Observable<any>;
 export type EntityActionFunction<T extends BaseData<HasId>> = (action: EntityAction<T>) => boolean;
@@ -48,6 +50,9 @@ export type CellContentFunction<T extends BaseData<HasId>> = (entity: T, key: st
 export type CellTooltipFunction<T extends BaseData<HasId>> = (entity: T, key: string) => string | undefined;
 export type HeaderCellStyleFunction<T extends BaseData<HasId>> = (key: string) => object;
 export type CellStyleFunction<T extends BaseData<HasId>> = (entity: T, key: string) => object;
+export type CopyCellContent<T extends BaseData<HasId>> = (entity: T, key: string, length: number) => object;
+
+export enum CellActionDescriptorType { 'DEFAULT', 'COPY_BUTTON'}
 
 export interface CellActionDescriptor<T extends BaseData<HasId>> {
   name: string;
@@ -56,7 +61,8 @@ export interface CellActionDescriptor<T extends BaseData<HasId>> {
   mdiIcon?: string;
   style?: any;
   isEnabled: (entity: T) => boolean;
-  onAction: ($event: MouseEvent, entity: T) => void;
+  onAction: ($event: MouseEvent, entity: T) => any;
+  type?: CellActionDescriptorType;
 }
 
 export interface GroupActionDescriptor<T extends BaseData<HasId>> {
@@ -69,6 +75,7 @@ export interface GroupActionDescriptor<T extends BaseData<HasId>> {
 export interface HeaderActionDescriptor {
   name: string;
   icon: string;
+  isMdiIcon?: boolean;
   isEnabled: () => boolean;
   onAction: ($event: MouseEvent) => void;
 }
@@ -95,7 +102,8 @@ export class EntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTabl
               public sortable: boolean = true,
               public headerCellStyleFunction: HeaderCellStyleFunction<T> = () => ({}),
               public cellTooltipFunction: CellTooltipFunction<T> = () => undefined,
-              public isNumberColumn: boolean = false) {
+              public isNumberColumn: boolean = false,
+              public actionCell: CellActionDescriptor<T> = null) {
     super('content', key, title, width, sortable);
   }
 }
@@ -130,11 +138,13 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
 
   constructor() {}
 
+  private table: IEntitiesTableComponent = null;
+  private entityDetailsPage: IEntityDetailsPageComponent = null;
+
   componentsData: any = null;
 
   loadDataOnInit = true;
   onLoadAction: (route: ActivatedRoute) => void = null;
-  table: EntitiesTableComponent = null;
   useTimePageLink = false;
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
@@ -153,6 +163,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   addDialogStyle = {};
   defaultSortOrder: SortOrder = {property: 'createdTime', direction: Direction.DESC};
   displayPagination = true;
+  pageMode = true;
   defaultPageSize = 10;
   columns: Array<EntityColumn<L>> = [];
   cellActionDescriptors: Array<CellActionDescriptor<L>> = [];
@@ -173,7 +184,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   deleteEntitiesTitle: EntityCountStringFunction = () => '';
   deleteEntitiesContent: EntityCountStringFunction = () => '';
   loadEntity: EntityByIdOperation<T | L> = () => of();
-  saveEntity: EntityTwoWayOperation<T> = (entity) => of(entity);
+  saveEntity: EntityTwoWayOperation<T> = (entity, originalEntity) => of(entity);
   deleteEntity: EntityIdOneWayOperation = () => of();
   entitiesFetchFunction: EntitiesFetchFunction<L, P> = () => of(emptyPageData<L>());
   onEntityAction: EntityActionFunction<T> = () => false;
@@ -182,6 +193,40 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entityAdded: EntityVoidFunction<T> = () => {};
   entityUpdated: EntityVoidFunction<T> = () => {};
   entitiesDeleted: EntityIdsVoidFunction<T> = () => {};
+
+  getTable(): IEntitiesTableComponent {
+    return this.table;
+  }
+
+  setTable(table: IEntitiesTableComponent) {
+    this.table = table;
+    this.entityDetailsPage = null;
+  }
+
+  getEntityDetailsPage(): IEntityDetailsPageComponent {
+    return this.entityDetailsPage;
+  }
+
+  setEntityDetailsPage(entityDetailsPage: IEntityDetailsPageComponent) {
+    this.entityDetailsPage = entityDetailsPage;
+    this.table = null;
+  }
+
+  updateData(closeDetails = false) {
+    if (this.table) {
+      this.table.updateData(closeDetails);
+    } else if (this.entityDetailsPage) {
+      this.entityDetailsPage.reload();
+    }
+  }
+
+  getActivatedRoute(): ActivatedRoute {
+    if (this.table) {
+      return this.table.route;
+    } else {
+      return null;
+    }
+  }
 }
 
 export function checkBoxCell(value: boolean): string {

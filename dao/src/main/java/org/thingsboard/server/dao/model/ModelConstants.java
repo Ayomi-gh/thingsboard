@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public class ModelConstants {
     }
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
-    public static final TenantId SYSTEM_TENANT = new TenantId(ModelConstants.NULL_UUID);
+    public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
 
     // this is the difference between midnight October 15, 1582 UTC and midnight January 1, 1970 UTC as 100 nanosecond units
     public static final long EPOCH_DIFF = 122192928000000000L;
@@ -257,6 +257,7 @@ public class ModelConstants {
     /**
      * Cassandra alarm constants.
      */
+    public static final String ENTITY_ALARM_COLUMN_FAMILY_NAME = "entity_alarm";
     public static final String ALARM_COLUMN_FAMILY_NAME = "alarm";
     public static final String ALARM_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String ALARM_CUSTOMER_ID_PROPERTY = CUSTOMER_ID_PROPERTY;
@@ -272,6 +273,8 @@ public class ModelConstants {
     public static final String ALARM_ACK_TS_PROPERTY = "ack_ts";
     public static final String ALARM_CLEAR_TS_PROPERTY = "clear_ts";
     public static final String ALARM_PROPAGATE_PROPERTY = "propagate";
+    public static final String ALARM_PROPAGATE_TO_OWNER_PROPERTY = "propagate_to_owner";
+    public static final String ALARM_PROPAGATE_TO_TENANT_PROPERTY = "propagate_to_tenant";
     public static final String ALARM_PROPAGATE_RELATION_TYPES = "propagate_relation_types";
 
     public static final String ALARM_BY_ID_VIEW_NAME = "alarm_by_id";
@@ -339,6 +342,8 @@ public class ModelConstants {
     public static final String DASHBOARD_IMAGE_PROPERTY = "image";
     public static final String DASHBOARD_CONFIGURATION_PROPERTY = "configuration";
     public static final String DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY = "assigned_customers";
+    public static final String DASHBOARD_MOBILE_HIDE_PROPERTY = "mobile_hide";
+    public static final String DASHBOARD_MOBILE_ORDER_PROPERTY = "mobile_order";
 
     public static final String DASHBOARD_BY_TENANT_AND_SEARCH_TEXT_COLUMN_FAMILY_NAME = "dashboard_by_tenant_and_search_text";
 
@@ -408,10 +413,20 @@ public class ModelConstants {
     /**
      * OAuth2 client registration constants.
      */
-    public static final String OAUTH2_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_PARAMS_COLUMN_FAMILY_NAME = "oauth2_params";
+    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+
+    public static final String OAUTH2_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_registration";
+    public static final String OAUTH2_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_domain";
+    public static final String OAUTH2_MOBILE_COLUMN_FAMILY_NAME = "oauth2_mobile";
+    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
+    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
+
     public static final String OAUTH2_CLIENT_REGISTRATION_INFO_COLUMN_FAMILY_NAME = "oauth2_client_registration_info";
     public static final String OAUTH2_CLIENT_REGISTRATION_COLUMN_FAMILY_NAME = "oauth2_client_registration";
-    public static final String OAUTH2_CLIENT_REGISTRATION_TO_DOMAIN_COLUMN_FAMILY_NAME = "oauth2_client_registration_to_domain";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_COLUMN_FAMILY_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_ENABLED_PROPERTY = "enabled";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
@@ -422,8 +437,8 @@ public class ModelConstants {
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
     public static final String OAUTH2_TOKEN_URI_PROPERTY = "token_uri";
-    public static final String OAUTH2_REDIRECT_URI_TEMPLATE_PROPERTY = "redirect_uri_template";
     public static final String OAUTH2_SCOPE_PROPERTY = "scope";
+    public static final String OAUTH2_PLATFORMS_PROPERTY = "platforms";
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
     public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
     public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
@@ -487,6 +502,7 @@ public class ModelConstants {
     public static final String OTA_PACKAGE_TYPE_COLUMN = "type";
     public static final String OTA_PACKAGE_TILE_COLUMN = TITLE_PROPERTY;
     public static final String OTA_PACKAGE_VERSION_COLUMN = "version";
+    public static final String OTA_PACKAGE_TAG_COLUMN = "tag";
     public static final String OTA_PACKAGE_URL_COLUMN = "url";
     public static final String OTA_PACKAGE_FILE_NAME_COLUMN = "file_name";
     public static final String OTA_PACKAGE_CONTENT_TYPE_COLUMN = "content_type";
@@ -495,6 +511,18 @@ public class ModelConstants {
     public static final String OTA_PACKAGE_DATA_COLUMN = "data";
     public static final String OTA_PACKAGE_DATA_SIZE_COLUMN = "data_size";
     public static final String OTA_PACKAGE_ADDITIONAL_INFO_COLUMN = ADDITIONAL_INFO_PROPERTY;
+
+    /**
+     * Persisted RPC constants.
+     */
+    public static final String RPC_TABLE_NAME = "rpc";
+    public static final String RPC_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
+    public static final String RPC_DEVICE_ID = "device_id";
+    public static final String RPC_EXPIRATION_TIME = "expiration_time";
+    public static final String RPC_REQUEST = "request";
+    public static final String RPC_RESPONSE = "response";
+    public static final String RPC_STATUS = "status";
+    public static final String RPC_ADDITIONAL_INFO = ADDITIONAL_INFO_PROPERTY;
 
     /**
      * Edge constants.
@@ -516,8 +544,6 @@ public class ModelConstants {
 
     public static final String EDGE_ROUTING_KEY_PROPERTY = "routing_key";
     public static final String EDGE_SECRET_PROPERTY = "secret";
-    public static final String EDGE_LICENSE_KEY_PROPERTY = "edge_license_key";
-    public static final String EDGE_CLOUD_ENDPOINT_KEY_PROPERTY = "cloud_endpoint";
 
     /**
      * Edge queue constants.

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2021 The Thingsboard Authors
+    Copyright © 2016-2022 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
           <div fxLayout="column" fxFlex="92">
             <div fxLayout="row" fxLayoutAlign="start center">
               <div fxFlex>{{ keyFilterControl.value.key.key }}</div>
-              <div fxFlex translate>{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) }}</div>
+              <div fxFlex>{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
               <button mat-icon-button color="primary"
                       type="button"
                       (click)="editKeyFilter($index)"

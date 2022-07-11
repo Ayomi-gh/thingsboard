@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,13 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.controller.HttpValidationCallback;
@@ -65,6 +67,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
@@ -136,6 +139,9 @@ public class AccessValidator {
 
     @Autowired
     protected OtaPackageService otaPackageService;
+
+    @Autowired
+    protected RpcService rpcService;
 
     private ExecutorService executor;
 
@@ -235,6 +241,9 @@ public class AccessValidator {
             case OTA_PACKAGE:
                 validateOtaPackage(currentUser, operation, entityId, callback);
                 return;
+            case RPC:
+                validateRpc(currentUser, operation, entityId, callback);
+                return;
             default:
                 //TODO: add support of other entities
                 throw new IllegalStateException("Not Implemented!");
@@ -259,6 +268,22 @@ public class AccessValidator {
                 }
             }), executor);
         }
+    }
+
+    private void validateRpc(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
+        ListenableFuture<Rpc> rpcFurure = rpcService.findRpcByIdAsync(currentUser.getTenantId(), new RpcId(entityId.getId()));
+        Futures.addCallback(rpcFurure, getCallback(callback, rpc -> {
+            if (rpc == null) {
+                return ValidationResult.entityNotFound("Rpc with requested id wasn't found!");
+            } else {
+                try {
+                    accessControlService.checkPermission(currentUser, Resource.RPC, operation, entityId, rpc);
+                } catch (ThingsboardException e) {
+                    return ValidationResult.accessDenied(e.getMessage());
+                }
+                return ValidationResult.ok(rpc);
+            }
+        }), executor);
     }
 
     private void validateDeviceProfile(final SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
@@ -425,7 +450,7 @@ public class AccessValidator {
         } else if (currentUser.isSystemAdmin()) {
             callback.onSuccess(ValidationResult.ok(null));
         } else {
-            ListenableFuture<Tenant> tenantFuture = tenantService.findTenantByIdAsync(currentUser.getTenantId(), new TenantId(entityId.getId()));
+            ListenableFuture<Tenant> tenantFuture = tenantService.findTenantByIdAsync(currentUser.getTenantId(), TenantId.fromUUID(entityId.getId()));
             Futures.addCallback(tenantFuture, getCallback(callback, tenant -> {
                 if (tenant == null) {
                     return ValidationResult.entityNotFound("Tenant with requested id wasn't found!");

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { Resolve } from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import { Resource, ResourceInfo, ResourceTypeTranslationMap } from '@shared/models/resource.models';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -46,6 +46,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
   constructor(private store: Store<AppState>,
               private resourceService: ResourceService,
               private translate: TranslateService,
+              private router: Router,
               private datePipe: DatePipe) {
 
     this.config.entityType = EntityType.TB_RESOURCE;
@@ -69,10 +70,10 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
     this.config.cellActionDescriptors.push(
       {
-        name: this.translate.instant('resource.export'),
+        name: this.translate.instant('resource.download'),
         icon: 'file_download',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.exportResource($event, entity)
+        onAction: ($event, entity) => this.downloadResource($event, entity)
       }
     );
 
@@ -118,7 +119,15 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     return this.config;
   }
 
-  exportResource($event: Event, resource: ResourceInfo) {
+  private openResource($event: Event, resourceInfo: ResourceInfo) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['settings', 'resources-library', resourceInfo.id.id]);
+    this.router.navigateByUrl(url);
+  }
+
+  downloadResource($event: Event, resource: ResourceInfo) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -127,8 +136,11 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
 
   onResourceAction(action: EntityAction<ResourceInfo>): boolean {
     switch (action.action) {
-      case 'uploadResource':
-        this.exportResource(action.event, action.entity);
+      case 'open':
+        this.openResource(action.event, action.entity);
+        return true;
+      case 'downloadResource':
+        this.downloadResource(action.event, action.entity);
         return true;
     }
     return false;

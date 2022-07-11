@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,9 @@ import {
   DynamicValueSourceType,
   dynamicValueSourceTypeTranslationMap,
   EntityKeyValueType,
-  FilterPredicateValue
+  FilterPredicateValue,
+  getDynamicSourcesForAllowUser,
+  inheritModeForDynamicValueSourceType
 } from '@shared/models/query/query.models';
 
 @Component({
@@ -52,22 +54,14 @@ import {
 })
 export class FilterPredicateValueComponent implements ControlValueAccessor, Validator, OnInit {
 
-  private readonly inheritModeForSources: DynamicValueSourceType[] = [
-    DynamicValueSourceType.CURRENT_CUSTOMER,
-    DynamicValueSourceType.CURRENT_DEVICE];
+  private readonly inheritModeForSources: DynamicValueSourceType[] = inheritModeForDynamicValueSourceType;
 
   @Input() disabled: boolean;
 
   @Input()
   set allowUserDynamicSource(allow: boolean) {
-    this.dynamicValueSourceTypes = [DynamicValueSourceType.CURRENT_TENANT,
-      DynamicValueSourceType.CURRENT_CUSTOMER];
+    this.dynamicValueSourceTypes = getDynamicSourcesForAllowUser(allow);
     this.allow = allow;
-    if (allow) {
-      this.dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_USER);
-    } else {
-      this.dynamicValueSourceTypes.push(DynamicValueSourceType.CURRENT_DEVICE);
-    }
   }
 
   private onlyUserDynamicSourceValue = false;
@@ -92,8 +86,9 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
 
   valueTypeEnum = EntityKeyValueType;
 
-  dynamicValueSourceTypes: DynamicValueSourceType[] = [DynamicValueSourceType.CURRENT_TENANT,
-    DynamicValueSourceType.CURRENT_CUSTOMER, DynamicValueSourceType.CURRENT_USER];
+  allow = true;
+
+  dynamicValueSourceTypes: DynamicValueSourceType[] = getDynamicSourcesForAllowUser(this.allow);
 
   dynamicValueSourceTypeTranslations = dynamicValueSourceTypeTranslationMap;
 
@@ -102,8 +97,6 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
   dynamicMode = false;
 
   inheritMode = false;
-
-  allow = true;
 
   private propagateChange = null;
   private propagateChangePending = false;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,13 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
     private String privacyPassphrase;
     private String engineId;
 
+    public SnmpDeviceTransportConfiguration() {
+        this.host = "localhost";
+        this.port = 161;
+        this.protocolVersion = SnmpProtocolVersion.V2C;
+        this.community = "public";
+    }
+
     @Override
     public DeviceTransportType getType() {
         return DeviceTransportType.SNMP;
@@ -76,7 +83,7 @@ public class SnmpDeviceTransportConfiguration implements DeviceTransportConfigur
                     isValid = StringUtils.isNotBlank(username) && StringUtils.isNotBlank(securityName)
                             && contextName != null && authenticationProtocol != null
                             && StringUtils.isNotBlank(authenticationPassphrase)
-                            && privacyProtocol != null && privacyPassphrase != null && engineId != null;
+                            && privacyProtocol != null && StringUtils.isNotBlank(privacyPassphrase) && engineId != null;
                     break;
             }
         }

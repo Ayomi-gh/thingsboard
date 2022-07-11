@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,11 +28,14 @@ export interface DashboardInfo extends BaseData<DashboardId> {
   title?: string;
   image?: string;
   assignedCustomers?: Array<ShortCustomerInfo>;
+  mobileHide?: boolean;
+  mobileOrder?: number;
 }
 
 export interface WidgetLayout {
   sizeX?: number;
   sizeY?: number;
+  mobileHide?: boolean;
   mobileHeight?: number;
   mobileOrder?: number;
   col?: number;
@@ -94,6 +97,7 @@ export interface DashboardSettings {
   toolbarAlwaysOpen?: boolean;
   hideToolbar?: boolean;
   titleColor?: string;
+  dashboardCss?: string;
 }
 
 export interface DashboardConfiguration {

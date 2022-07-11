@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -203,7 +203,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     this.dirty = true;
   }
 
-  add(entitySubtype: string): void {
+  private add(entitySubtype: string): void {
     if (!this.modelValue || this.modelValue.indexOf(entitySubtype) === -1) {
       if (!this.modelValue) {
         this.modelValue = [];
@@ -213,13 +213,12 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       this.entitySubtypeListFormGroup.get('entitySubtypeList').setValue(this.entitySubtypeList);
     }
     this.propagateChange(this.modelValue);
-    this.clear();
   }
 
   chipAdd(event: MatChipInputEvent): void {
-    const value = event.value;
-    if ((value || '').trim()) {
-      this.add(value.trim());
+    const value = (event.value || '').trim();
+    if (value) {
+      this.add(value);
     }
     this.clear('');
   }
@@ -234,7 +233,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
         this.modelValue = null;
       }
       this.propagateChange(this.modelValue);
-      this.clear();
     }
   }
 

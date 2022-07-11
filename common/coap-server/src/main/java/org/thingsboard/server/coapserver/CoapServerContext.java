@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,14 @@ public class CoapServerContext {
     @Getter
     @Value("${transport.coap.timeout}")
     private Long timeout;
+
+    @Getter
+    @Value("${transport.coap.psm_activity_timer:10000}")
+    private long psmActivityTimer;
+
+    @Getter
+    @Value("${transport.coap.paging_transmission_window:10000}")
+    private long pagingTransmissionWindow;
 
     @Getter
     @Autowired(required = false)

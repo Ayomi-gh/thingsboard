@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,12 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
     @Column(name = ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
 
+    @Column(name = ModelConstants.DASHBOARD_MOBILE_HIDE_PROPERTY)
+    private boolean mobileHide;
+
+    @Column(name = ModelConstants.DASHBOARD_MOBILE_ORDER_PROPERTY)
+    private Integer mobileOrder;
+
     @Type(type = "json")
     @Column(name = ModelConstants.DASHBOARD_CONFIGURATION_PROPERTY)
     private JsonNode configuration;
@@ -93,6 +99,8 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
                 log.error("Unable to serialize assigned customers to string!", e);
             }
         }
+        this.mobileHide = dashboard.isMobileHide();
+        this.mobileOrder = dashboard.getMobileOrder();
         this.configuration = dashboard.getConfiguration();
     }
 
@@ -111,7 +119,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
         Dashboard dashboard = new Dashboard(new DashboardId(this.getUuid()));
         dashboard.setCreatedTime(this.getCreatedTime());
         if (tenantId != null) {
-            dashboard.setTenantId(new TenantId(tenantId));
+            dashboard.setTenantId(TenantId.fromUUID(tenantId));
         }
         dashboard.setTitle(title);
         dashboard.setImage(image);
@@ -122,6 +130,8 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> implements S
                 log.warn("Unable to parse assigned customers!", e);
             }
         }
+        dashboard.setMobileHide(mobileHide);
+        dashboard.setMobileOrder(mobileOrder);
         dashboard.setConfiguration(configuration);
         return dashboard;
     }

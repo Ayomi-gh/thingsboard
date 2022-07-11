@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package org.thingsboard.server.actors.app;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActor;
+import org.thingsboard.server.actors.TbActorCtx;
+import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.device.SessionTimeoutCheckMsg;
 import org.thingsboard.server.actors.service.ContextAwareActor;
 import org.thingsboard.server.actors.service.ContextBasedCreator;
 import org.thingsboard.server.actors.service.DefaultActorService;
@@ -55,7 +58,7 @@ public class AppActor extends ContextAwareActor {
     private final TbTenantProfileCache tenantProfileCache;
     private final TenantService tenantService;
     private final Set<TenantId> deletedTenants;
-    private boolean ruleChainsInitialized;
+    private volatile boolean ruleChainsInitialized;
 
     private AppActor(ActorSystemContext systemContext) {
         super(systemContext);
@@ -65,11 +68,20 @@ public class AppActor extends ContextAwareActor {
     }
 
     @Override
+    public void init(TbActorCtx ctx) throws TbActorException {
+        super.init(ctx);
+        if (systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE)) {
+            systemContext.schedulePeriodicMsgWithDelay(ctx, SessionTimeoutCheckMsg.instance(),
+                    systemContext.getSessionReportTimeout(), systemContext.getSessionReportTimeout());
+        }
+    }
+
+    @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
             initTenantActors();
             ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG) {
+            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
                 log.warn("Rule Chains initialized by unexpected message: {}", msg);
             }
         }
@@ -95,10 +107,14 @@ public class AppActor extends ContextAwareActor {
             case DEVICE_RPC_REQUEST_TO_DEVICE_ACTOR_MSG:
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
+            case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
                 break;
             case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
                 onToTenantActorMsg((EdgeEventUpdateMsg) msg);
+                break;
+            case SESSION_TIMEOUT_MSG:
+                ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
                 break;
             default:
                 return false;
@@ -159,7 +175,7 @@ public class AppActor extends ContextAwareActor {
             }
         } else {
             if (EntityType.TENANT.equals(msg.getEntityId().getEntityType())) {
-                TenantId tenantId = new TenantId(msg.getEntityId().getId());
+                TenantId tenantId = TenantId.fromUUID(msg.getEntityId().getId());
                 if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
@@ -221,7 +237,7 @@ public class AppActor extends ContextAwareActor {
 
         @Override
         public TbActorId createActorId() {
-            return new TbEntityActorId(new TenantId(EntityId.NULL_UUID));
+            return new TbEntityActorId(TenantId.SYS_TENANT_ID);
         }
 
         @Override

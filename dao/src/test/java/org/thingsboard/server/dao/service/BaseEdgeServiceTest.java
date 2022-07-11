@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
         Edge edge = new Edge();
         edge.setName("My edge");
         edge.setType("default");
-        edge.setTenantId(new TenantId(Uuids.timeBased()));
+        edge.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         edgeService.saveEdge(edge);
     }
 
@@ -581,18 +581,6 @@ public abstract class BaseEdgeServiceTest extends AbstractServiceTest {
 
     private Edge constructEdge(String name, String type) {
         return constructEdge(tenantId, name, type);
-    }
-
-    private Edge constructEdge(TenantId tenantId, String name, String type) {
-        Edge edge = new Edge();
-        edge.setTenantId(tenantId);
-        edge.setName(name);
-        edge.setType(type);
-        edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
-        edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
-        return edge;
     }
 
     @Test

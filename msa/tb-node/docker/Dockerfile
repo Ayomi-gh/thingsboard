@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2021 The Thingsboard Authors
+# Copyright © 2016-2022 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 #
 
 FROM thingsboard/openjdk11
+
+RUN echo 'networkaddress.cache.ttl=60' >> /etc/java-11-openjdk/security/java.security
 
 COPY start-tb-node.sh ${pkg.name}.deb /tmp/
 

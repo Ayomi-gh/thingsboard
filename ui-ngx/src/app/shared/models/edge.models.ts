@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,8 +30,6 @@ export interface Edge extends BaseData<EdgeId> {
   type: string;
   secret: string;
   routingKey: string;
-  cloudEndpoint: string;
-  edgeLicenseKey: string;
   label?: string;
   additionalInfo?: any;
   rootRuleChainId?: RuleChainId;
@@ -136,6 +134,14 @@ export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, stri
     [EdgeEventActionType.ENTITY_MERGE_REQUEST, 'edge-event.action-type-entity-merge-request']
   ]
 );
+
+export const bodyContentEdgeEventActionTypes: EdgeEventActionType[] = [
+  EdgeEventActionType.POST_ATTRIBUTES,
+  EdgeEventActionType.ATTRIBUTES_UPDATED,
+  EdgeEventActionType.ATTRIBUTES_DELETED,
+  EdgeEventActionType.TIMESERIES_UPDATED,
+  EdgeEventActionType.RPC_CALL
+];
 
 export const edgeEventStatusColor = new Map<EdgeEventStatus, string>(
   [

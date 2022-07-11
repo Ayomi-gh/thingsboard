@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class ResetPasswordRequestComponent extends PageComponent implements OnInit {
 
+  clicked: boolean = false;
+
   requestPasswordRequest = this.fb.group({
     email: ['', [Validators.email, Validators.required]]
   }, {updateOn: 'submit'});
@@ -44,8 +46,14 @@ export class ResetPasswordRequestComponent extends PageComponent implements OnIn
   ngOnInit() {
   }
 
+  disableInputs() {
+    this.requestPasswordRequest.disable();
+    this.clicked = true;
+  }
+
   sendResetPasswordLink() {
     if (this.requestPasswordRequest.valid) {
+      this.disableInputs();
       this.authService.sendResetPasswordLink(this.requestPasswordRequest.get('email').value).subscribe(
         () => {
           this.store.dispatch(new ActionNotificationShow({

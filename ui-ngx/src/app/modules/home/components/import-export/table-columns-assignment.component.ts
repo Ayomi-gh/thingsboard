@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,7 +57,11 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
 
   columnTypes: AssignmentColumnType[] = [];
 
+  columnDeviceCredentials: AssignmentColumnType[] = [];
+
   columnTypesTranslations = importEntityColumnTypeTranslations;
+
+  readonly entityTypeDevice = EntityType.DEVICE;
 
   private columns: CsvColumnParam[];
 
@@ -83,8 +87,25 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
           { value: ImportEntityColumnType.sharedAttribute },
           { value: ImportEntityColumnType.serverAttribute },
           { value: ImportEntityColumnType.timeseries },
-          { value: ImportEntityColumnType.accessToken },
           { value: ImportEntityColumnType.isGateway }
+        );
+        this.columnDeviceCredentials.push(
+          { value: ImportEntityColumnType.accessToken },
+          { value: ImportEntityColumnType.x509 },
+          { value: ImportEntityColumnType.mqttClientId },
+          { value: ImportEntityColumnType.mqttUserName },
+          { value: ImportEntityColumnType.mqttPassword },
+          { value: ImportEntityColumnType.lwm2mClientEndpoint },
+          { value: ImportEntityColumnType.lwm2mClientSecurityConfigMode },
+          { value: ImportEntityColumnType.lwm2mClientIdentity },
+          { value: ImportEntityColumnType.lwm2mClientKey },
+          { value: ImportEntityColumnType.lwm2mClientCert },
+          { value: ImportEntityColumnType.lwm2mBootstrapServerSecurityMode },
+          { value: ImportEntityColumnType.lwm2mBootstrapServerClientPublicKeyOrId },
+          { value: ImportEntityColumnType.lwm2mBootstrapServerClientSecretKey },
+          { value: ImportEntityColumnType.lwm2mServerSecurityMode },
+          { value: ImportEntityColumnType.lwm2mServerClientPublicKeyOrId },
+          { value: ImportEntityColumnType.lwm2mServerClientSecretKey },
         );
         break;
       case EntityType.ASSET:
@@ -95,8 +116,6 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
         break;
       case EntityType.EDGE:
         this.columnTypes.push(
-          { value: ImportEntityColumnType.edgeLicenseKey },
-          { value: ImportEntityColumnType.cloudEndpoint },
           { value: ImportEntityColumnType.routingKey },
           { value: ImportEntityColumnType.secret }
         );
@@ -123,11 +142,7 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     const isSelectName = this.columns.findIndex((column) => column.type === ImportEntityColumnType.name) > -1;
     const isSelectType = this.columns.findIndex((column) => column.type === ImportEntityColumnType.type) > -1;
     const isSelectLabel = this.columns.findIndex((column) => column.type === ImportEntityColumnType.label) > -1;
-    const isSelectCredentials = this.columns.findIndex((column) => column.type === ImportEntityColumnType.accessToken) > -1;
-    const isSelectGateway = this.columns.findIndex((column) => column.type === ImportEntityColumnType.isGateway) > -1;
     const isSelectDescription = this.columns.findIndex((column) => column.type === ImportEntityColumnType.description) > -1;
-    const isSelectEdgeLicenseKey = this.columns.findIndex((column) => column.type === ImportEntityColumnType.edgeLicenseKey) > -1;
-    const isSelectCloudEndpoint = this.columns.findIndex((column) => column.type === ImportEntityColumnType.cloudEndpoint) > -1;
     const isSelectRoutingKey = this.columns.findIndex((column) => column.type === ImportEntityColumnType.routingKey) > -1;
     const isSelectSecret = this.columns.findIndex((column) => column.type === ImportEntityColumnType.secret) > -1;
     const hasInvalidColumn = this.columns.findIndex((column) => !this.columnValid(column)) > -1;
@@ -139,22 +154,19 @@ export class TableColumnsAssignmentComponent implements OnInit, ControlValueAcce
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.label).disabled = isSelectLabel;
     this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.description).disabled = isSelectDescription;
 
-    const isGatewayColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway);
-    if (isGatewayColumnType) {
-      isGatewayColumnType.disabled = isSelectGateway;
+    if (this.entityType === EntityType.DEVICE) {
+      const isSelectGateway = this.columns.findIndex((column) => column.type === ImportEntityColumnType.isGateway) > -1;
+
+      const isGatewayColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.isGateway);
+      if (isGatewayColumnType) {
+        isGatewayColumnType.disabled = isSelectGateway;
+      }
+
+      this.columnDeviceCredentials.forEach((columnCredential) => {
+        columnCredential.disabled = this.columns.findIndex(column => column.type === columnCredential.value) > -1;
+      });
     }
-    const accessTokenColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.accessToken);
-    if (accessTokenColumnType) {
-      accessTokenColumnType.disabled = isSelectCredentials;
-    }
-    const edgeLicenseKeyColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.edgeLicenseKey);
-    if (edgeLicenseKeyColumnType) {
-      edgeLicenseKeyColumnType.disabled = isSelectEdgeLicenseKey;
-    }
-    const cloudEndpointColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.cloudEndpoint);
-    if (cloudEndpointColumnType) {
-      cloudEndpointColumnType.disabled = isSelectCloudEndpoint;
-    }
+
     const routingKeyColumnType = this.columnTypes.find((columnType) => columnType.value === ImportEntityColumnType.routingKey);
     if (routingKeyColumnType) {
       routingKeyColumnType.disabled = isSelectRoutingKey;

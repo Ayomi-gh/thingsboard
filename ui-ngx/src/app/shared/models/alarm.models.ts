@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import { TimePageLink } from '@shared/models/page/page-link';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntityType } from '@shared/models/entity-type.models';
 import { CustomerId } from '@shared/models/id/customer-id';
+import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/table-widget.models';
 
 export enum AlarmSeverity {
   CRITICAL = 'CRITICAL',
@@ -105,6 +106,8 @@ export interface AlarmInfo extends Alarm {
 }
 
 export interface AlarmDataInfo extends AlarmInfo {
+  actionCellButtons?: TableCellButtonActionDescriptor[];
+  hasActions?: boolean;
   [key: string]: any;
 }
 

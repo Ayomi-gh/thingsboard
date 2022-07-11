@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
 public class SnmpDeviceSimulatorV2 extends BaseAgent {
 
     public static class RequestProcessor extends CommandProcessor {
@@ -167,6 +168,7 @@ public class SnmpDeviceSimulatorV2 extends BaseAgent {
     protected void addUsmUser(USM usm) {
     }
 
+    @SuppressWarnings({"unchecked"})
     protected void initTransportMappings() {
         transportMappings = new TransportMapping[]{TransportMappings.getInstance().createTransportMapping(address)};
     }

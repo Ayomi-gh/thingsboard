@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,16 +20,18 @@ import {
   EventEmitter,
   forwardRef,
   Input,
-  NgZone, OnChanges,
+  NgZone,
+  OnChanges,
   OnInit,
-  Output, SimpleChanges,
+  Output,
+  SimpleChanges,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { map, mergeMap, share, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,11 +46,13 @@ import { DeviceProfileService } from '@core/http/device-profile.service';
 import { DeviceProfileDialogComponent, DeviceProfileDialogData } from './device-profile-dialog.component';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { AddDeviceProfileDialogComponent, AddDeviceProfileDialogData } from './add-device-profile-dialog.component';
+import { emptyPageData } from '@shared/models/page/page-data';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-device-profile-autocomplete',
   templateUrl: './device-profile-autocomplete.component.html',
-  styleUrls: [],
+  styleUrls: ['./device-profile-autocomplete.component.scss'],
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => DeviceProfileAutocompleteComponent),
@@ -75,6 +79,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
 
   @Input()
   addNewProfile = true;
+
+  @Input()
+  showDetailsPageLink = false;
 
   @Input()
   transportType: DeviceTransportType = null;
@@ -107,6 +114,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   filteredDeviceProfiles: Observable<Array<DeviceProfileInfo>>;
 
   searchText = '';
+  deviceProfileURL: string;
 
   private dirty = false;
 
@@ -169,7 +177,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
             return '';
           }
         }),
-        mergeMap(name => this.fetchDeviceProfiles(name) ),
+        debounceTime(150),
+        distinctUntilChanged(),
+        switchMap(name => this.fetchDeviceProfiles(name)),
         share()
       );
   }
@@ -223,9 +233,9 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.selectDeviceProfileFormGroup.disable();
+      this.selectDeviceProfileFormGroup.disable({emitEvent: false});
     } else {
-      this.selectDeviceProfileFormGroup.enable();
+      this.selectDeviceProfileFormGroup.enable({emitEvent: false});
     }
   }
 
@@ -235,6 +245,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       this.deviceProfileService.getDeviceProfileInfo(value.id).subscribe(
         (profile) => {
           this.modelValue = new DeviceProfileId(profile.id.id);
+          this.deviceProfileURL = getEntityDetailsPageURL(this.modelValue.id, this.modelValue.entityType);
           this.selectDeviceProfileFormGroup.get('deviceProfile').patchValue(profile, {emitEvent: false});
           this.deviceProfileChanged.emit(profile);
         }
@@ -289,6 +300,7 @@ export class DeviceProfileAutocompleteComponent implements ControlValueAccessor,
       direction: Direction.ASC
     });
     return this.deviceProfileService.getDeviceProfileInfos(pageLink, this.transportType, {ignoreLoading: true}).pipe(
+      catchError(() => of(emptyPageData<DeviceProfileInfo>())),
       map(pageData => {
         let data = pageData.data;
         if (this.displayAllOnEmpty) {

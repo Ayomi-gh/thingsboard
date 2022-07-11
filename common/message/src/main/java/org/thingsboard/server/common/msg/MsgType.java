@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,16 @@ public enum MsgType {
     RULE_CHAIN_TO_RULE_CHAIN_MSG,
 
     /**
+     * Message that is sent by RuleNodeActor as input to other RuleChain with command to process TbMsg.
+     */
+    RULE_CHAIN_INPUT_MSG,
+
+    /**
+     * Message that is sent by RuleNodeActor as output to RuleNode in other RuleChain with command to process TbMsg.
+     */
+    RULE_CHAIN_OUTPUT_MSG,
+
+    /**
      * Message that is sent by RuleActor to RuleChainActor with command to process TbMsg by next nodes in chain.
      */
     RULE_TO_RULE_CHAIN_TELL_NEXT_MSG,
@@ -91,6 +101,8 @@ public enum MsgType {
     SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG,
 
     DEVICE_ACTOR_SERVER_SIDE_RPC_TIMEOUT_MSG,
+
+    REMOVE_RPC_TO_DEVICE_ACTOR_MSG,
 
     /**
      * Message that is sent from the Device Actor to Rule Engine. Requires acknowledgement

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import { StateControllerComponent } from './state-controller.component';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { UtilsService } from '@core/services/utils.service';
-import { base64toObj, objToBase64URI } from '@app/core/utils';
+import { base64toObj, objToBase64 } from '@app/core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { MobileService } from '@core/services/mobile.service';
@@ -54,7 +54,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
     super.ngOnDestroy();
   }
 
-  protected init() {
+  public init() {
     if (this.preservedState) {
       this.stateObject = this.preservedState;
       setTimeout(() => {
@@ -235,7 +235,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
     if (this.dashboardCtrl.dashboardCtx.state !== stateId) {
       this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
-      if (stateId && this.statesValue[stateId]) {
+      if (this.syncStateWithQueryParam && stateId && this.statesValue[stateId]) {
         this.mobileService.handleDashboardStateName(this.getStateName(stateId, this.statesValue[stateId]));
       }
       if (update) {
@@ -246,7 +246,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
 
   private updateLocation() {
     if (this.stateObject[0].id) {
-      const newState = objToBase64URI(this.stateObject);
+      const newState = objToBase64(this.stateObject);
       this.updateStateParam(newState);
     }
   }

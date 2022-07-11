@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ export class AddEntitiesToEdgeDialogComponent extends
               public dialogRef: MatDialogRef<AddEntitiesToEdgeDialogComponent, boolean>,
               public fb: FormBuilder) {
     super(store, router, dialogRef);
-    this.entityType = data.entityType;
+    this.entityType = this.data.entityType;
   }
 
   ngOnInit(): void {
@@ -77,7 +77,7 @@ export class AddEntitiesToEdgeDialogComponent extends
       entityIds: [null, [Validators.required]]
     });
     this.subType = '';
-    switch (this.data.entityType) {
+    switch (this.entityType) {
       case EntityType.DEVICE:
         this.assignToEdgeTitle = 'device.assign-device-to-edge-title';
         this.assignToEdgeText = 'device.assign-device-to-edge-text';
@@ -118,7 +118,7 @@ export class AddEntitiesToEdgeDialogComponent extends
     const tasks: Observable<any>[] = [];
     entityIds.forEach(
       (entityId) => {
-        tasks.push(this.getAssignToEdgeTask(this.data.edgeId, entityId));
+        tasks.push(this.getAssignToEdgeTask(this.data.edgeId, entityId, this.entityType));
       }
     );
     forkJoin(tasks).subscribe(
@@ -128,8 +128,8 @@ export class AddEntitiesToEdgeDialogComponent extends
     );
   }
 
-  private getAssignToEdgeTask(edgeId: string, entityId: string): Observable<any> {
-    switch (this.data.entityType) {
+  private getAssignToEdgeTask(edgeId: string, entityId: string, entityType: EntityType): Observable<any> {
+    switch (entityType) {
       case EntityType.DEVICE:
         return this.deviceService.assignDeviceToEdge(edgeId, entityId);
       case EntityType.ASSET:

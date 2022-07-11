@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -66,6 +66,10 @@ export class WidgetService {
         this.invalidateWidgetsBundleCache();
       }
     );
+  }
+
+  public getWidgetScopeVariables(): string[] {
+    return ['tinycolor', 'cssjs', 'moment', '$', 'jQuery'];
   }
 
   public getAllWidgetsBundles(config?: RequestConfig): Observable<Array<WidgetsBundle>> {
@@ -311,5 +315,4 @@ export class WidgetService {
     this.loadWidgetsBundleCacheSubject = undefined;
     this.widgetTypeInfosCache.clear();
   }
-
 }

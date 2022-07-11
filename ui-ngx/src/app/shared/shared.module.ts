@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
+import { NgModule, SecurityContext } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FooterComponent } from '@shared/components/footer.component';
 import { LogoComponent } from '@shared/components/logo.component';
 import { TbSnackBarComponent, ToastDirective } from '@shared/components/toast.directive';
 import { BreadcrumbComponent } from '@shared/components/breadcrumb.component';
 import { FlowInjectionToken, NgxFlowModule } from '@flowjs/ngx-flow';
-import { NgxFlowchartModule } from 'ngx-flowchart/dist/ngx-flowchart';
+import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -78,6 +78,7 @@ import { DatetimePeriodComponent } from '@shared/components/time/datetime-period
 import { EnumToArrayPipe } from '@shared/pipe/enum-to-array.pipe';
 import { ClipboardModule } from 'ngx-clipboard';
 import { ValueInputComponent } from '@shared/components/value-input.component';
+import { MarkdownModule, MarkedOptions } from 'ngx-markdown';
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
@@ -93,6 +94,7 @@ import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
+import { JsonObjectViewComponent, } from '@shared/components/json-object-view.component';
 import { FooterFabButtonsComponent } from '@shared/components/footer-fab-buttons.component';
 import { CircularProgressDirective } from '@shared/components/circular-progress.directive';
 import {
@@ -131,7 +133,7 @@ import { NavTreeComponent } from '@shared/components/nav-tree.component';
 import { LedLightComponent } from '@shared/components/led-light.component';
 import { TbJsonToStringDirective } from '@shared/components/directives/tb-json-to-string.directive';
 import { JsonObjectEditDialogComponent } from '@shared/components/dialog/json-object-edit-dialog.component';
-import { HistorySelectorComponent } from './components/time/history-selector/history-selector.component';
+import { HistorySelectorComponent } from '@shared/components/time/history-selector/history-selector.component';
 import { EntityGatewaySelectComponent } from '@shared/components/entity/entity-gateway-select.component';
 import { DndModule } from 'ngx-drag-drop';
 import { QueueTypeListComponent } from '@shared/components/queue/queue-type-list.component';
@@ -143,6 +145,24 @@ import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
+import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
+import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
+import { HelpPopupComponent } from '@shared/components/help-popup.component';
+import { TbPopoverComponent, TbPopoverDirective } from '@shared/components/popover.component';
+import { TbStringTemplateOutletDirective } from '@shared/components/directives/sring-template-outlet.directive';
+import { TbComponentOutletDirective } from '@shared/components/directives/component-outlet.directive';
+import { HelpMarkdownComponent } from '@shared/components/help-markdown.component';
+import { MarkedOptionsService } from '@shared/components/marked-options.service';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { HELP_MARKDOWN_COMPONENT_TOKEN, SHARED_MODULE_TOKEN } from '@shared/components/tokens';
+import { TbMarkdownComponent } from '@shared/components/markdown.component';
+import { ProtobufContentComponent } from '@shared/components/protobuf-content.component';
+import { CssComponent } from '@shared/components/css.component';
+import { SafePipe } from '@shared/pipe/safe.pipe';
+
+export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
+  return markedOptionsService;
+}
 
 @NgModule({
   providers: [
@@ -153,6 +173,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SafePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -160,7 +181,10 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     {
       provide: MAT_DATE_LOCALE,
       useValue: 'en-GB'
-    }
+    },
+    { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
+    { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
+    TbPopoverService
   ],
   declarations: [
     FooterComponent,
@@ -172,7 +196,14 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
+    TbPopoverComponent,
+    TbStringTemplateOutletDirective,
+    TbComponentOutletDirective,
+    TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
+    HelpMarkdownComponent,
+    HelpPopupComponent,
     TbCheckboxComponent,
     TbSnackBarComponent,
     TbErrorComponent,
@@ -204,8 +235,10 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
+    CssComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -232,6 +265,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    SafePipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -240,7 +274,10 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     EntityGatewaySelectComponent,
     ContactComponent,
     OtaPackageAutocompleteComponent,
-    WidgetsBundleSearchComponent
+    WidgetsBundleSearchComponent,
+    CopyButtonComponent,
+    TogglePasswordComponent,
+    ProtobufContentComponent
   ],
   imports: [
     CommonModule,
@@ -290,7 +327,16 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     NgxHmCarouselModule,
     DndModule,
     NgxFlowModule,
-    NgxFlowchartModule
+    NgxFlowchartModule,
+    // ngx-markdown
+    MarkdownModule.forRoot({
+      sanitize: SecurityContext.NONE,
+      markedOptions: {
+        provide: MarkedOptions,
+        useFactory: MarkedOptionsFactory,
+        deps: [MarkedOptionsService]
+      }
+    })
   ],
   exports: [
     FooterComponent,
@@ -302,7 +348,13 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
+    TbStringTemplateOutletDirective,
+    TbComponentOutletDirective,
+    TbPopoverDirective,
+    TbMarkdownComponent,
     HelpComponent,
+    HelpMarkdownComponent,
+    HelpPopupComponent,
     TbCheckboxComponent,
     TbErrorComponent,
     TbCheatSheetComponent,
@@ -331,8 +383,10 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
     JsonObjectEditComponent,
+    JsonObjectViewComponent,
     JsonContentComponent,
     JsFuncComponent,
+    CssComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -382,6 +436,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     NgxHmCarouselModule,
     DndModule,
     NgxFlowchartModule,
+    MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
     TodoDialogComponent,
@@ -405,14 +460,19 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    SafePipe,
     SelectableColumnsPipe,
+    RouterModule,
     TranslateModule,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
     EntityGatewaySelectComponent,
     ContactComponent,
     OtaPackageAutocompleteComponent,
-    WidgetsBundleSearchComponent
+    WidgetsBundleSearchComponent,
+    CopyButtonComponent,
+    TogglePasswordComponent,
+    ProtobufContentComponent
   ]
 })
 export class SharedModule { }

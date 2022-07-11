@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ $error-height: 14px !default;
       font-weight: 500;
       color: #757575;
       white-space: nowrap;
+      z-index: 1;
 
       .off-label {
         color: #b7b5b5;
@@ -86,6 +87,8 @@ $error-height: 14px !default;
 :host ::ng-deep {
   .tb-switch {
     .switch {
+      z-index: 1;
+
       mat-slide-toggle {
         position: absolute;
         top: 0;

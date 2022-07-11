@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ export class MenuService {
           {
             name: 'resource.resources-library',
             icon: 'folder',
-            path: '/resources-library'
+            path: '/settings/resources-library'
           }
         ]
       }
@@ -235,7 +235,6 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
-        notExact: true,
         icon: 'home'
       },
       {
@@ -293,24 +292,24 @@ export class MenuService {
       sections.push(
         {
           id: guid(),
+          name: 'edge.edge-instances',
+          type: 'link',
+          path: '/edgeInstances',
+          icon: 'router'
+        },
+        {
+          id: guid(),
           name: 'edge.management',
           type: 'toggle',
-          path: '/edges',
-          height: '80px',
-          icon: 'router',
+          path: '/edgeManagement',
+          height: '40px',
+          icon: 'settings_input_antenna',
           pages: [
-            {
-              id: guid(),
-              name: 'edge.edge-instances',
-              type: 'link',
-              path: '/edges',
-              icon: 'router'
-            },
             {
               id: guid(),
               name: 'edge.rulechain-templates',
               type: 'link',
-              path: '/edges/ruleChains',
+              path: '/edgeManagement/ruleChains',
               icon: 'settings_ethernet'
             }
           ]
@@ -344,8 +343,7 @@ export class MenuService {
         name: 'api-usage.api-usage',
         type: 'link',
         path: '/usage',
-        icon: 'insert_chart',
-        notExact: true
+        icon: 'insert_chart'
       },
       {
         id: guid(),
@@ -448,12 +446,12 @@ export class MenuService {
             {
               name: 'edge.edge-instances',
               icon: 'router',
-              path: '/edges'
+              path: '/edgeInstances'
             },
             {
               name: 'edge.rulechain-templates',
               icon: 'settings_ethernet',
-              path: '/edges/ruleChains'
+              path: '/edgeManagement/ruleChains'
             }
           ]
         }
@@ -517,7 +515,6 @@ export class MenuService {
         name: 'home.home',
         type: 'link',
         path: '/home',
-        notExact: true,
         icon: 'home'
       },
       {
@@ -548,7 +545,7 @@ export class MenuService {
           id: guid(),
           name: 'edge.edge-instances',
           type: 'link',
-          path: '/edges',
+          path: '/edgeInstances',
           icon: 'router'
         }
       );
@@ -606,8 +603,8 @@ export class MenuService {
           places: [
             {
               name: 'edge.edge-instances',
-              icon: 'router',
-              path: '/edges'
+              icon: 'settings_input_antenna',
+              path: '/edgeInstances'
             }
           ]
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public abstract class AbstractCoapClaimDeviceTest extends AbstractCoapIntegratio
 
     protected void processTestClaimingDevice(boolean emptyPayload) throws Exception {
         log.warn("[testClaimingDevice] Device: {}, Transport type: {}", savedDevice.getName(), savedDevice.getType());
-        CoapClient client = getCoapClient(FeatureType.CLAIM);
+        client = getCoapClient(FeatureType.CLAIM);
         byte[] payloadBytes;
         byte[] failurePayloadBytes;
         if (emptyPayload) {
@@ -116,8 +116,8 @@ public abstract class AbstractCoapClaimDeviceTest extends AbstractCoapIntegratio
 
         ClaimResponse claimResponse = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest()),
-                20,
-                100
+                100,
+                200
         );
 
         assertEquals(claimResponse, ClaimResponse.FAILURE);
@@ -126,8 +126,8 @@ public abstract class AbstractCoapClaimDeviceTest extends AbstractCoapIntegratio
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResult.class, status().isOk()),
-                20,
-                100
+                100,
+                200
         );
         assertEquals(claimResult.getResponse(), ClaimResponse.SUCCESS);
         Device claimedDevice = claimResult.getDevice();

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 
 @Slf4j
-public abstract class PaginatedUpdater<I, D extends SearchTextBased<? extends UUIDBased>> {
+public abstract class PaginatedUpdater<I, D> {
 
     private static final int DEFAULT_LIMIT = 100;
     private int updated = 0;

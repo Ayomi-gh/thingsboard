@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -121,6 +123,24 @@ public interface TbContext {
     void enqueue(TbMsg msg, Runnable onSuccess, Consumer<Throwable> onFailure);
 
     /**
+     * Sends message to the nested rule chain.
+     * Fails processing of the message if the nested rule chain is not found.
+     *
+     * @param msg - the message
+     * @param ruleChainId - the id of a nested rule chain
+     */
+    void input(TbMsg msg, RuleChainId ruleChainId);
+
+    /**
+     * Sends message to the caller rule chain.
+     * Acknowledge the message if no caller rule chain is present in processing stack
+     *
+     * @param msg - the message
+     * @param relationType - the relation type that will be used to route messages in the caller rule chain
+     */
+    void output(TbMsg msg, String relationType);
+
+    /**
      * Puts new message to custom queue for processing
      *
      * @param msg - message
@@ -188,6 +208,8 @@ public interface TbContext {
 
     DeviceService getDeviceService();
 
+    TbClusterService getClusterService();
+
     DashboardService getDashboardService();
 
     RuleEngineAlarmService getAlarmService();
@@ -214,8 +236,6 @@ public interface TbContext {
 
     EdgeEventService getEdgeEventService();
 
-    ListeningExecutor getJsExecutor();
-
     ListeningExecutor getMailExecutor();
 
     ListeningExecutor getSmsExecutor();
@@ -224,7 +244,7 @@ public interface TbContext {
 
     ListeningExecutor getExternalCallExecutor();
 
-    MailService getMailService();
+    MailService getMailService(boolean isSystem);
 
     SmsService getSmsService();
 
@@ -244,7 +264,9 @@ public interface TbContext {
 
     CassandraCluster getCassandraCluster();
 
-    TbResultSetFuture submitCassandraTask(CassandraStatementTask task);
+    TbResultSetFuture submitCassandraReadTask(CassandraStatementTask task);
+
+    TbResultSetFuture submitCassandraWriteTask(CassandraStatementTask task);
 
     PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
 

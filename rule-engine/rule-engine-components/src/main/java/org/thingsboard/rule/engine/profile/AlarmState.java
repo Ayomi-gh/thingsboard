@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -50,6 +51,7 @@ import java.util.function.BiFunction;
 @Slf4j
 class AlarmState {
 
+    public static final String ERROR_MSG = "Failed to process alarm rule for Device [%s]: %s";
     private final ProfileState deviceProfile;
     private final EntityId originator;
     private DeviceProfileAlarm alarmDefinition;
@@ -74,12 +76,20 @@ class AlarmState {
         lastMsgMetaData = msg.getMetaData();
         lastMsgQueueName = msg.getQueueName();
         this.dataSnapshot = data;
-        return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
+        try {
+            return createOrClearAlarms(ctx, msg, data, update, AlarmRuleState::eval);
+        } catch (NumericParseException e) {
+            throw new RuntimeException(String.format(ERROR_MSG, originator.getId().toString(), e.getMessage()));
+        }
     }
 
     public boolean process(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         initCurrentAlarm(ctx);
-        return createOrClearAlarms(ctx, null, ts, null, AlarmRuleState::eval);
+        try {
+            return createOrClearAlarms(ctx, null, ts, null, (alarmState, tsParam) -> alarmState.eval(tsParam, dataSnapshot));
+        } catch (NumericParseException e) {
+            throw new RuntimeException(String.format(ERROR_MSG, originator.getId().toString(), e.getMessage()));
+        }
     }
 
     public <T> boolean createOrClearAlarms(TbContext ctx, TbMsg msg, T data, SnapshotUpdate update, BiFunction<AlarmRuleState, T, AlarmEvalResult> evalFunction) {
@@ -187,7 +197,7 @@ class AlarmState {
         setAlarmConditionMetadata(ruleState, metaData);
         TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : ServiceQueue.MAIN, "ALARM",
                 originator, msg != null ? msg.getCustomerId() : null, metaData, data);
-        ctx.tellNext(newMsg, relationType);
+        ctx.enqueueForTellNext(newMsg, relationType);
     }
 
     protected void setAlarmConditionMetadata(AlarmRuleState ruleState, TbMsgMetaData metaData) {
@@ -257,6 +267,8 @@ class AlarmState {
             currentAlarm.setOriginator(originator);
             currentAlarm.setTenantId(ctx.getTenantId());
             currentAlarm.setPropagate(alarmDefinition.isPropagate());
+            currentAlarm.setPropagateToOwner(alarmDefinition.isPropagateToOwner());
+            currentAlarm.setPropagateToTenant(alarmDefinition.isPropagateToTenant());
             if (alarmDefinition.getPropagateRelationTypes() != null) {
                 currentAlarm.setPropagateRelationTypes(alarmDefinition.getPropagateRelationTypes());
             }
@@ -269,16 +281,22 @@ class AlarmState {
     private JsonNode createDetails(AlarmRuleState ruleState) {
         JsonNode alarmDetails;
         String alarmDetailsStr = ruleState.getAlarmRule().getAlarmDetails();
+        DashboardId dashboardId = ruleState.getAlarmRule().getDashboardId();
 
-        if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-            for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
-                EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
-                if (entityKeyValue != null) {
-                    alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
-                }
-            }
+        if (StringUtils.isNotEmpty(alarmDetailsStr) || dashboardId != null) {
             ObjectNode newDetails = JacksonUtil.newObjectNode();
-            newDetails.put("data", alarmDetailsStr);
+            if (StringUtils.isNotEmpty(alarmDetailsStr)) {
+                for (var keyFilter : ruleState.getAlarmRule().getCondition().getCondition()) {
+                    EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter.getKey());
+                    if (entityKeyValue != null) {
+                        alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey().getKey()), getValueAsString(entityKeyValue));
+                    }
+                }
+                newDetails.put("data", alarmDetailsStr);
+            }
+            if (dashboardId != null) {
+                newDetails.put("dashboardId", dashboardId.getId().toString());
+            }
             alarmDetails = newDetails;
         } else if (currentAlarm != null) {
             alarmDetails = currentAlarm.getDetails();

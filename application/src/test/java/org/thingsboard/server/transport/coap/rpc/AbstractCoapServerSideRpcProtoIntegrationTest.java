@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,13 +58,13 @@ public abstract class AbstractCoapServerSideRpcProtoIntegrationTest extends Abst
             "package rpc;\n" +
             "\n" +
             "message RpcRequestMsg {\n" +
-            "  string method = 1;\n" +
-            "  int32 requestId = 2;\n" +
+            "  optional string method = 1;\n" +
+            "  optional int32 requestId = 2;\n" +
             "  Params params = 3;\n" +
             "\n" +
             "  message Params {\n" +
-            "      string pin = 1;\n" +
-            "      int32 value = 2;\n" +
+            "      optional string pin = 1;\n" +
+            "      optional int32 value = 2;\n" +
             "   }\n" +
             "}";
 

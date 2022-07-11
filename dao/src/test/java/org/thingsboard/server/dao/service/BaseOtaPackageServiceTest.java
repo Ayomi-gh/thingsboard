@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -37,11 +38,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import javax.validation.ValidationException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 
 public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
@@ -56,7 +59,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
     private static final String URL = "http://firmware.test.org";
 
-    private IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
+    private final IdComparator<OtaPackageInfo> idComparator = new IdComparator<>();
 
     private TenantId tenantId;
 
@@ -76,6 +79,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         deviceProfileId = savedDeviceProfile.getId();
     }
 
+    @SuppressWarnings("deprecation")
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -163,7 +167,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setVersion(VERSION);
         firmware.setUrl(URL);
         firmware.setDataSize(0L);
-        OtaPackageInfo savedFirmware = otaPackageService.saveOtaPackageInfo(firmware);
+        OtaPackageInfo savedFirmware = otaPackageService.saveOtaPackageInfo(firmware, true);
 
         Assert.assertNotNull(savedFirmware);
         Assert.assertNotNull(savedFirmware.getId());
@@ -174,7 +178,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Assert.assertEquals(firmware.getContentType(), savedFirmware.getContentType());
 
         savedFirmware.setAdditionalInfo(JacksonUtil.newObjectNode());
-        otaPackageService.saveOtaPackageInfo(savedFirmware);
+        otaPackageService.saveOtaPackageInfo(savedFirmware, true);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, savedFirmware.getId());
         Assert.assertEquals(foundFirmware.getTitle(), savedFirmware.getTitle());
@@ -190,7 +194,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setType(FIRMWARE);
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
-        OtaPackageInfo savedFirmwareInfo = otaPackageService.saveOtaPackageInfo(firmwareInfo);
+        OtaPackageInfo savedFirmwareInfo = otaPackageService.saveOtaPackageInfo(firmwareInfo, false);
 
         Assert.assertNotNull(savedFirmwareInfo);
         Assert.assertNotNull(savedFirmwareInfo.getId());
@@ -216,7 +220,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         savedFirmwareInfo = otaPackageService.findOtaPackageInfoById(tenantId, savedFirmwareInfo.getId());
         savedFirmwareInfo.setAdditionalInfo(JacksonUtil.newObjectNode());
-        otaPackageService.saveOtaPackageInfo(savedFirmwareInfo);
+        otaPackageService.saveOtaPackageInfo(savedFirmwareInfo, false);
 
         OtaPackage foundFirmware = otaPackageService.findOtaPackageById(tenantId, firmware.getId());
         firmware.setAdditionalInfo(JacksonUtil.newObjectNode());
@@ -338,7 +342,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
     @Test
     public void testSaveFirmwareWithInvalidTenant() {
         OtaPackage firmware = new OtaPackage();
-        firmware.setTenantId(new TenantId(Uuids.timeBased()));
+        firmware.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         firmware.setDeviceProfileId(deviceProfileId);
         firmware.setType(FIRMWARE);
         firmware.setTitle(TITLE);
@@ -399,7 +403,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareInfo.setType(FIRMWARE);
         firmwareInfo.setTitle(TITLE);
         firmwareInfo.setVersion(VERSION);
-        otaPackageService.saveOtaPackageInfo(firmwareInfo);
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, false);
 
         OtaPackageInfo newFirmwareInfo = new OtaPackageInfo();
         newFirmwareInfo.setTenantId(tenantId);
@@ -410,7 +414,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
 
         thrown.expect(DataValidationException.class);
         thrown.expectMessage("OtaPackage with such title and version already exists!");
-        otaPackageService.saveOtaPackageInfo(newFirmwareInfo);
+        otaPackageService.saveOtaPackageInfo(newFirmwareInfo, false);
     }
 
     @Test
@@ -484,7 +488,6 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
             otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         } finally {
             deviceProfileService.deleteDeviceProfile(tenantId, savedDeviceProfile.getId());
-            otaPackageService.deleteOtaPackage(tenantId, savedFirmware.getId());
         }
     }
 
@@ -506,7 +509,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setType(FIRMWARE);
         firmware.setTitle(TITLE);
         firmware.setVersion(VERSION);
-        OtaPackageInfo savedFirmware = otaPackageService.saveOtaPackageInfo(firmware);
+        OtaPackageInfo savedFirmware = otaPackageService.saveOtaPackageInfo(firmware, false);
 
         OtaPackageInfo foundFirmware = otaPackageService.findOtaPackageInfoById(tenantId, savedFirmware.getId());
         Assert.assertNotNull(foundFirmware);
@@ -543,7 +546,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareWithUrl.setUrl(URL);
         firmwareWithUrl.setDataSize(0L);
 
-        OtaPackageInfo savedFwWithUrl = otaPackageService.saveOtaPackageInfo(firmwareWithUrl);
+        OtaPackageInfo savedFwWithUrl = otaPackageService.saveOtaPackageInfo(firmwareWithUrl, true);
         savedFwWithUrl.setHasData(true);
 
         firmwares.add(savedFwWithUrl);
@@ -562,7 +565,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Collections.sort(firmwares, idComparator);
         Collections.sort(loadedFirmwares, idComparator);
 
-        Assert.assertEquals(firmwares, loadedFirmwares);
+        assertThat(firmwares).isEqualTo(loadedFirmwares);
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
@@ -588,7 +591,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmwareWithUrl.setUrl(URL);
         firmwareWithUrl.setDataSize(0L);
 
-        OtaPackageInfo savedFwWithUrl = otaPackageService.saveOtaPackageInfo(firmwareWithUrl);
+        OtaPackageInfo savedFwWithUrl = otaPackageService.saveOtaPackageInfo(firmwareWithUrl, true);
         savedFwWithUrl.setHasData(true);
 
         firmwares.add(savedFwWithUrl);
@@ -617,7 +620,7 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         Collections.sort(firmwares, idComparator);
         Collections.sort(loadedFirmwares, idComparator);
 
-        Assert.assertEquals(firmwares, loadedFirmwares);
+        assertThat(firmwares).isEqualTo(loadedFirmwares);
 
         otaPackageService.deleteOtaPackagesByTenantId(tenantId);
 
@@ -625,6 +628,71 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         pageData = otaPackageService.findTenantOtaPackagesByTenantId(tenantId, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
+    }
+
+    @Test
+    public void testSaveOtaPackageInfoWithBlankAndEmptyUrl() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl("   ");
+        thrown.expect(DataValidationException.class);
+        thrown.expectMessage("Ota package URL should be specified!");
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+        firmwareInfo.setUrl("");
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+    }
+
+    @Test
+    public void testSaveOtaPackageUrlCantBeUpdated() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(TITLE);
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl(URL);
+        firmwareInfo.setTenantId(tenantId);
+
+        OtaPackageInfo savedFirmwareInfo = otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+
+        thrown.expect(DataValidationException.class);
+        thrown.expectMessage("Updating otaPackage URL is prohibited!");
+
+        savedFirmwareInfo.setUrl("https://newurl.com");
+        otaPackageService.saveOtaPackageInfo(savedFirmwareInfo, true);
+    }
+
+    @Test
+    public void testSaveOtaPackageCantViolateSizeOfTitle() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setTitle(RandomStringUtils.random(257));
+        firmwareInfo.setVersion(VERSION);
+        firmwareInfo.setUrl(URL);
+        firmwareInfo.setTenantId(tenantId);
+
+        thrown.expect(ValidationException.class);
+        thrown.expectMessage("length of title must be equal or less than 255");
+
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
+    }
+
+    @Test
+    public void testSaveOtaPackageCantViolateSizeOfVersion() {
+        OtaPackageInfo firmwareInfo = new OtaPackageInfo();
+        firmwareInfo.setDeviceProfileId(deviceProfileId);
+        firmwareInfo.setType(FIRMWARE);
+        firmwareInfo.setUrl(URL);
+        firmwareInfo.setTenantId(tenantId);
+        firmwareInfo.setTitle(TITLE);
+
+        firmwareInfo.setVersion(RandomStringUtils.random(257));
+        thrown.expectMessage("length of version must be equal or less than 255");
+
+        otaPackageService.saveOtaPackageInfo(firmwareInfo, true);
     }
 
     private OtaPackage createFirmware(TenantId tenantId, String version) {
@@ -642,5 +710,4 @@ public abstract class BaseOtaPackageServiceTest extends AbstractServiceTest {
         firmware.setDataSize(DATA_SIZE);
         return otaPackageService.saveOtaPackage(firmware);
     }
-
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.Event;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -103,7 +104,8 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -132,6 +134,8 @@ import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
 import org.thingsboard.server.common.data.widget.WidgetType;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.io.Closeable;
@@ -142,7 +146,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -337,7 +340,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         addTimePageLinkToParam(params, pageLink);
 
         return restTemplate.exchange(
-                baseURL +  urlSecondPart + getTimeUrlParams(pageLink),
+                baseURL +  urlSecondPart + "&" + getTimeUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmInfo>>() {
@@ -1131,11 +1134,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public Optional<Device> saveDeviceWithCredentials(Device device, DeviceCredentials credentials) {
         try {
-            Map<Class<?>, Object> deviceCredentials = new ConcurrentHashMap<>();
-            deviceCredentials.put(Device.class, device);
-            deviceCredentials.put(DeviceCredentials.class, credentials);
-//            return restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class).getBody();
-            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/lwm2m/device-credentials", deviceCredentials, Device.class);
+            SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
+            ResponseEntity<Device> deviceOpt = restTemplate.postForEntity(baseURL + "/api/device-with-credentials", request, Device.class);
             return Optional.ofNullable(deviceOpt.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -1145,7 +1145,6 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
             }
         }
     }
-
 
     public PageData<Device> getTenantDevices(String type, PageLink pageLink) {
         Map<String, String> params = new HashMap<>();
@@ -1258,7 +1257,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("deviceProfileId", deviceProfileId.getId().toString());
 
         return restTemplate.exchange(
-                baseURL + "/api/devices/count/{otaPackageType}?deviceProfileId={deviceProfileId}",
+                baseURL + "/api/devices/count/{otaPackageType}/{deviceProfileId}",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<Long>() {
@@ -1773,21 +1772,37 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public List<OAuth2ClientInfo> getOAuth2Clients() {
+    public List<OAuth2ClientInfo> getOAuth2Clients(String pkgName, PlatformType platformType) {
+        Map<String, String> params = new HashMap<>();
+        StringBuilder urlBuilder = new StringBuilder(baseURL);
+        urlBuilder.append("/api/noauth/oauth2Clients");
+        if (pkgName != null) {
+            urlBuilder.append("?pkgName={pkgName}");
+            params.put("pkgName", pkgName);
+        }
+        if (platformType != null) {
+            if (pkgName != null) {
+                urlBuilder.append("&");
+            } else {
+                urlBuilder.append("?");
+            }
+            urlBuilder.append("platform={platform}");
+            params.put("platform", platformType.name());
+        }
         return restTemplate.exchange(
-                baseURL + "/api/noauth/oauth2Clients",
+                urlBuilder.toString(),
                 HttpMethod.POST,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
-                }).getBody();
+                }, params).getBody();
     }
 
-    public OAuth2ClientsParams getCurrentOAuth2Params() {
-        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2ClientsParams.class).getBody();
+    public OAuth2Info getCurrentOAuth2Info() {
+        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2Info.class).getBody();
     }
 
-    public OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params) {
-        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Params, OAuth2ClientsParams.class).getBody();
+    public OAuth2Info saveOAuth2Info(OAuth2Info oauth2Info) {
+        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Info, OAuth2Info.class).getBody();
     }
 
     public String getLoginProcessingUrl() {
@@ -1795,12 +1810,12 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
     }
 
     public void handleOneWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {
-        restTemplate.postForLocation(baseURL + "/api/plugins/rpc/oneway/{deviceId}", requestBody, deviceId.getId());
+        restTemplate.postForLocation(baseURL + "/api/rpc/oneway/{deviceId}", requestBody, deviceId.getId());
     }
 
     public JsonNode handleTwoWayDeviceRPCRequest(DeviceId deviceId, JsonNode requestBody) {
         return restTemplate.exchange(
-                baseURL + "/api/plugins/rpc/twoway/{deviceId}",
+                baseURL + "/api/rpc/twoway/{deviceId}",
                 HttpMethod.POST,
                 new HttpEntity<>(requestBody),
                 new ParameterizedTypeReference<JsonNode>() {
@@ -2018,7 +2033,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         params.put("useStrictDataTypes", Boolean.toString(useStrictDataTypes));
 
         StringBuilder urlBuilder = new StringBuilder(baseURL);
-        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
+        urlBuilder.append("/api/plugins/telemetry/{entityType}/{entityId}/values/timeseries?keys={keys}&interval={interval}&limit={limit}&agg={agg}&useStrictDataTypes={useStrictDataTypes}&orderBy={orderBy}");
 
         if (startTime != null) {
             urlBuilder.append("&startTs={startTs}");
@@ -2362,7 +2377,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
 
     public void setUserCredentialsEnabled(UserId userId, boolean userCredentialsEnabled) {
         restTemplate.postForLocation(
-                baseURL + "/api/user/{userId}/userCredentialsEnabled?serCredentialsEnabled={serCredentialsEnabled}",
+                baseURL + "/api/user/{userId}/userCredentialsEnabled?userCredentialsEnabled={userCredentialsEnabled}",
                 null,
                 userId.getId(),
                 userCredentialsEnabled);
@@ -2410,11 +2425,11 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 }).getBody();
     }
 
-    public Optional<WidgetType> getWidgetTypeById(WidgetTypeId widgetTypeId) {
+    public Optional<WidgetTypeDetails> getWidgetTypeById(WidgetTypeId widgetTypeId) {
         try {
-            ResponseEntity<WidgetType> widgetType =
-                    restTemplate.getForEntity(baseURL + "/api/widgetType/{widgetTypeId}", WidgetType.class, widgetTypeId.getId());
-            return Optional.ofNullable(widgetType.getBody());
+            ResponseEntity<WidgetTypeDetails> widgetTypeDetails =
+                    restTemplate.getForEntity(baseURL + "/api/widgetType/{widgetTypeId}", WidgetTypeDetails.class, widgetTypeId.getId());
+            return Optional.ofNullable(widgetTypeDetails.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Optional.empty();
@@ -2424,8 +2439,8 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
     }
 
-    public WidgetType saveWidgetType(WidgetType widgetType) {
-        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetType, WidgetType.class).getBody();
+    public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails) {
+        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
     }
 
     public void deleteWidgetType(WidgetTypeId widgetTypeId) {
@@ -2438,6 +2453,28 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<WidgetType>>() {
+                },
+                isSystem,
+                bundleAlias).getBody();
+    }
+
+    public List<WidgetTypeDetails> getBundleWidgetTypesDetails(boolean isSystem, String bundleAlias) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypesDetails?isSystem={isSystem}&bundleAlias={bundleAlias}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetTypeDetails>>() {
+                },
+                isSystem,
+                bundleAlias).getBody();
+    }
+
+    public List<WidgetTypeInfo> getBundleWidgetTypesInfos(boolean isSystem, String bundleAlias) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypesInfos?isSystem={isSystem}&bundleAlias={bundleAlias}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetTypeInfo>>() {
                 },
                 isSystem,
                 bundleAlias).getBody();
@@ -2961,11 +2998,13 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         ).getBody();
     }
 
-    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo) {
-        return restTemplate.postForEntity(baseURL + "/api/otaPackage", otaPackageInfo, OtaPackageInfo.class).getBody();
+    public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
+        Map<String, String> params = new HashMap<>();
+        params.put("isUrl", Boolean.toString(isUrl));
+        return restTemplate.postForEntity(baseURL + "/api/otaPackage?isUrl={isUrl}", otaPackageInfo, OtaPackageInfo.class, params).getBody();
     }
 
-    public OtaPackage saveOtaPackageData(OtaPackageId otaPackageId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {
+    public OtaPackageInfo saveOtaPackageData(OtaPackageId otaPackageId, String checkSum, ChecksumAlgorithm checksumAlgorithm, MultipartFile file) throws Exception {
         HttpHeaders header = new HttpHeaders();
         header.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -2987,7 +3026,7 @@ public class RestClient implements ClientHttpRequestInterceptor, Closeable {
         }
 
         return restTemplate.postForEntity(
-                baseURL + url, requestEntity, OtaPackage.class, params
+                baseURL + url, requestEntity, OtaPackageInfo.class, params
         ).getBody();
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,17 @@ public class DataConstants {
     public static final String IS_CLEARED_ALARM = "isClearedAlarm";
     public static final String ALARM_CONDITION_REPEATS = "alarmConditionRepeats";
     public static final String ALARM_CONDITION_DURATION = "alarmConditionDuration";
+    public static final String PERSISTENT = "persistent";
+    public static final String TIMEOUT = "timeout";
+    public static final String EXPIRATION_TIME = "expirationTime";
+    public static final String ADDITIONAL_INFO = "additionalInfo";
+    public static final String RETRIES = "retries";
+    public static final String COAP_TRANSPORT_NAME = "COAP";
+    public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
+    public static final String MQTT_TRANSPORT_NAME = "MQTT";
+    public static final String HTTP_TRANSPORT_NAME = "HTTP";
+    public static final String SNMP_TRANSPORT_NAME = "SNMP";
+
 
     public static final String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
@@ -76,6 +87,15 @@ public class DataConstants {
 
     public static final String RPC_CALL_FROM_SERVER_TO_DEVICE = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
+    public static final String RPC_QUEUED = "RPC_QUEUED";
+    public static final String RPC_SENT = "RPC_SENT";
+    public static final String RPC_DELIVERED = "RPC_DELIVERED";
+    public static final String RPC_SUCCESSFUL = "RPC_SUCCESSFUL";
+    public static final String RPC_TIMEOUT = "RPC_TIMEOUT";
+    public static final String RPC_EXPIRED = "RPC_EXPIRED";
+    public static final String RPC_FAILED = "RPC_FAILED";
+    public static final String RPC_DELETED = "RPC_DELETED";
+
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";
     public static final String DURATION_MS_FIELD_NAME = "durationMs";
@@ -96,4 +116,5 @@ public class DataConstants {
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
 
+    public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
 }

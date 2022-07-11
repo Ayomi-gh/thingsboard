@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,11 @@ export enum AliasFilterType {
   edgeSearchQuery = 'edgeSearchQuery',
   entityViewSearchQuery = 'entityViewSearchQuery'
 }
+
+export const edgeAliasFilterTypes = new Array<string>(
+  AliasFilterType.edgeType,
+  AliasFilterType.edgeSearchQuery
+);
 
 export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
   [

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,12 @@ import java.util.UUID;
 public interface EdgeEventDao extends Dao<EdgeEvent> {
 
     /**
-     * Save or update edge event object async
+     * Save or update edge event object
      *
      * @param edgeEvent the event object
      * @return saved edge event object future
      */
-    ListenableFuture<EdgeEvent> saveAsync(EdgeEvent edgeEvent);
+    EdgeEvent save(EdgeEvent edgeEvent);
 
 
     /**
@@ -47,5 +47,11 @@ public interface EdgeEventDao extends Dao<EdgeEvent> {
      * @return the event list
      */
     PageData<EdgeEvent> findEdgeEvents(UUID tenantId, EdgeId edgeId, TimePageLink pageLink, boolean withTsUpdate);
+
+    /**
+     * Executes stored procedure to cleanup old edge events.
+     * @param ttl the ttl for edge events in seconds
+     */
+    void cleanupEvents(long ttl);
 
 }

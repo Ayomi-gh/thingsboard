@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,44 @@
 package org.thingsboard.server.service.edge.rpc.constructor;
 
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
-import org.thingsboard.server.common.data.widget.WidgetType;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.edge.UpdateMsgType;
-import org.thingsboard.server.gen.edge.WidgetTypeUpdateMsg;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 @Component
 @TbCoreComponent
 public class WidgetTypeMsgConstructor {
 
-    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetType widgetType) {
+    public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails) {
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(msgType)
-                .setIdMSB(widgetType.getId().getId().getMostSignificantBits())
-                .setIdLSB(widgetType.getId().getId().getLeastSignificantBits());
-                if (widgetType.getBundleAlias() != null) {
-                    builder.setBundleAlias(widgetType.getBundleAlias());
-                }
-                if (widgetType.getAlias() != null) {
-                    builder.setAlias(widgetType.getAlias());
-                }
-                if (widgetType.getName() != null) {
-                    builder.setName(widgetType.getName());
-                }
-                if (widgetType.getDescriptor() != null) {
-                    builder.setDescriptorJson(JacksonUtil.toString(widgetType.getDescriptor()));
-                }
-                if (widgetType.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
-                   builder.setIsSystem(true);
-                }
+                .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
+                .setIdLSB(widgetTypeDetails.getId().getId().getLeastSignificantBits());
+        if (widgetTypeDetails.getBundleAlias() != null) {
+            builder.setBundleAlias(widgetTypeDetails.getBundleAlias());
+        }
+        if (widgetTypeDetails.getAlias() != null) {
+            builder.setAlias(widgetTypeDetails.getAlias());
+        }
+        if (widgetTypeDetails.getName() != null) {
+            builder.setName(widgetTypeDetails.getName());
+        }
+        if (widgetTypeDetails.getDescriptor() != null) {
+            builder.setDescriptorJson(JacksonUtil.toString(widgetTypeDetails.getDescriptor()));
+        }
+        if (widgetTypeDetails.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+            builder.setIsSystem(true);
+        }
+        if (widgetTypeDetails.getImage() != null) {
+            builder.setImage(widgetTypeDetails.getImage());
+        }
+        if (widgetTypeDetails.getDescription() != null) {
+            builder.setDescription(widgetTypeDetails.getDescription());
+        }
         return builder.build();
     }
 

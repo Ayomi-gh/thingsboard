@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,12 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
     @Column(name = ModelConstants.DASHBOARD_ASSIGNED_CUSTOMERS_PROPERTY)
     private String assignedCustomers;
 
+    @Column(name = ModelConstants.DASHBOARD_MOBILE_HIDE_PROPERTY)
+    private boolean mobileHide;
+
+    @Column(name = ModelConstants.DASHBOARD_MOBILE_ORDER_PROPERTY)
+    private Integer mobileOrder;
+
     public DashboardInfoEntity() {
         super();
     }
@@ -84,6 +90,8 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
                 log.error("Unable to serialize assigned customers to string!", e);
             }
         }
+        this.mobileHide = dashboardInfo.isMobileHide();
+        this.mobileOrder = dashboardInfo.getMobileOrder();
     }
 
     @Override
@@ -105,7 +113,7 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
         DashboardInfo dashboardInfo = new DashboardInfo(new DashboardId(this.getUuid()));
         dashboardInfo.setCreatedTime(createdTime);
         if (tenantId != null) {
-            dashboardInfo.setTenantId(new TenantId(tenantId));
+            dashboardInfo.setTenantId(TenantId.fromUUID(tenantId));
         }
         dashboardInfo.setTitle(title);
         dashboardInfo.setImage(image);
@@ -116,6 +124,8 @@ public class DashboardInfoEntity extends BaseSqlEntity<DashboardInfo> implements
                 log.warn("Unable to parse assigned customers!", e);
             }
         }
+        dashboardInfo.setMobileHide(mobileHide);
+        dashboardInfo.setMobileOrder(mobileOrder);
         return dashboardInfo;
     }
 

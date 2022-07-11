@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 ///
 
 import { InjectionToken } from '@angular/core';
+import { IModulesMap } from '@modules/common/modules-map.models';
 
 export const Constants = {
   serverErrorCode: {
@@ -54,7 +55,7 @@ export const MediaBreakpoints = {
   'gt-xl': 'screen and (min-width: 5001px)'
 };
 
-const helpBaseUrl = 'https://thingsboard.io';
+export const helpBaseUrl = 'https://thingsboard.io';
 
 export const HelpLinks = {
   linksMap: {
@@ -99,7 +100,8 @@ export const HelpLinks = {
     ruleNodeSaveAttributes: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-attributes-node',
     ruleNodeSaveTimeseries: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-timeseries-node',
     ruleNodeSaveToCustomTable: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table',
-    ruleNodeRuleChain: helpBaseUrl + '/docs/user-guide/ui/rule-chains/',
+    ruleNodeRuleChain: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/flow-nodes/#rule-chain-node',
+    ruleNodeOutputNode: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/flow-nodes/#output-node',
     ruleNodeAwsSns: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sns-node',
     ruleNodeAwsSqs: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node',
     ruleNodeKafka: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#kafka-node',
@@ -120,8 +122,9 @@ export const HelpLinks = {
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
+    resources: helpBaseUrl + '/docs/user-guide/ui/resources',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
-    otaUpdates: helpBaseUrl + '/docs/user-guide/ui/ota-updates',
+    otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
     widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
     widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
@@ -146,6 +149,22 @@ export enum ValueType {
   BOOLEAN = 'BOOLEAN',
   JSON = 'JSON'
 }
+
+export enum DataType {
+  STRING = 'STRING',
+  LONG = 'LONG',
+  BOOLEAN = 'BOOLEAN',
+  DOUBLE = 'DOUBLE',
+  JSON = 'JSON'
+}
+
+export const DataTypeTranslationMap = new Map([
+  [DataType.STRING, 'value.string'],
+  [DataType.LONG, 'value.integer'],
+  [DataType.BOOLEAN, 'value.boolean'],
+  [DataType.DOUBLE, 'value.double'],
+  [DataType.JSON, 'value.json']
+]);
 
 export const valueTypesMap = new Map<ValueType, ValueTypeData>(
   [
@@ -224,7 +243,8 @@ export const contentTypesMap = new Map<ContentType, ContentTypeData>(
   ]
 );
 
+export const hidePageSizePixelValue = 550;
 export const customTranslationsPrefix = 'custom.';
 export const i18nPrefix = 'i18n';
 
-export const MODULES_MAP = new InjectionToken<{[key: string]: any}>('ModulesMap');
+export const MODULES_MAP = new InjectionToken<IModulesMap>('ModulesMap');

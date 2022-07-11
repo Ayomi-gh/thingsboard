@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { EntitySubtype } from '@app/shared/models/entity-type.models';
 import { Asset, AssetInfo, AssetSearchQuery } from '@app/shared/models/asset.models';
+import { BulkImportRequest, BulkImportResult } from '@home/components/import-export/import-export.models';
 
 @Injectable({
   providedIn: 'root'
@@ -103,6 +104,10 @@ export class AssetService {
                        config?: RequestConfig): Observable<PageData<AssetInfo>> {
     return this.http.get<PageData<AssetInfo>>(`/api/edge/${edgeId}/assets${pageLink.toQuery()}&type=${type}`,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public bulkImportAssets(entitiesData: BulkImportRequest, config?: RequestConfig): Observable<BulkImportResult> {
+    return this.http.post<BulkImportResult>('/api/asset/bulk_import', entitiesData, defaultHttpOptionsFromConfig(config));
   }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
@@ -100,7 +100,7 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
     public void testSaveDashboardWithInvalidTenant() {
         Dashboard dashboard = new Dashboard();
         dashboard.setTitle("My dashboard");
-        dashboard.setTenantId(new TenantId(Uuids.timeBased()));
+        dashboard.setTenantId(TenantId.fromUUID(Uuids.timeBased()));
         dashboardService.saveDashboard(dashboard);
     }
     
@@ -202,6 +202,66 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
         
+        tenantService.deleteTenant(tenantId);
+    }
+
+    @Test
+    public void testFindMobileDashboardsByTenantId() {
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Test tenant");
+        tenant = tenantService.saveTenant(tenant);
+
+        TenantId tenantId = tenant.getId();
+
+        List<DashboardInfo> mobileDashboards = new ArrayList<>();
+        for (int i=0;i<165;i++) {
+            Dashboard dashboard = new Dashboard();
+            dashboard.setTenantId(tenantId);
+            dashboard.setTitle("Dashboard"+i);
+            dashboard.setMobileHide(i % 2 == 0);
+            if (!dashboard.isMobileHide()) {
+                dashboard.setMobileOrder(i % 4 == 0 ? (int)(Math.random() * 100) : null);
+            }
+            Dashboard savedDashboard = dashboardService.saveDashboard(dashboard);
+            if (!dashboard.isMobileHide()) {
+                mobileDashboards.add(new DashboardInfo(savedDashboard));
+            }
+        }
+
+        List<DashboardInfo> loadedMobileDashboards = new ArrayList<>();
+        PageLink pageLink = new PageLink(16, 0, null, new SortOrder("title", SortOrder.Direction.ASC));
+        PageData<DashboardInfo> pageData = null;
+        do {
+            pageData = dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
+            loadedMobileDashboards.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        Collections.sort(mobileDashboards, (o1, o2) -> {
+            Integer order1 = o1.getMobileOrder();
+            Integer order2 = o2.getMobileOrder();
+            if (order1 == null && order2 == null) {
+                return o1.getTitle().compareTo(o2.getTitle());
+            } else if (order1 == null && order2 != null) {
+                return 1;
+            }  else if (order2 == null) {
+                return -1;
+            } else {
+                return order1 - order2;
+            }
+        });
+
+        Assert.assertEquals(mobileDashboards, loadedMobileDashboards);
+
+        dashboardService.deleteDashboardsByTenantId(tenantId);
+
+        pageLink = new PageLink(31);
+        pageData = dashboardService.findMobileDashboardsByTenantId(tenantId, pageLink);
+        Assert.assertFalse(pageData.hasNext());
+        Assert.assertTrue(pageData.getData().isEmpty());
+
         tenantService.deleteTenant(tenantId);
     }
     
@@ -358,8 +418,6 @@ public abstract class BaseDashboardServiceTest extends AbstractServiceTest {
         edge.setType("default");
         edge.setSecret(RandomStringUtils.randomAlphanumeric(20));
         edge.setRoutingKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setEdgeLicenseKey(RandomStringUtils.randomAlphanumeric(20));
-        edge.setCloudEndpoint("http://localhost:8080");
         edge = edgeService.saveEdge(edge);
         try {
             dashboardService.assignDashboardToEdge(tenantId, dashboard.getId(), edge.getId());

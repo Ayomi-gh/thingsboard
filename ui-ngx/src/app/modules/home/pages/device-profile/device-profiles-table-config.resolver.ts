@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2021 The Thingsboard Authors
+/// Copyright © 2016-2022 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve } from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import {
   checkBoxCell,
   DateEntityTableColumn,
@@ -53,6 +53,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialogService: DialogService,
+              private router: Router,
               private dialog: MatDialog) {
 
     this.config.entityType = EntityType.DEVICE_PROFILE;
@@ -104,7 +105,8 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
     this.config.entitiesFetchFunction = pageLink => this.deviceProfileService.getDeviceProfiles(pageLink);
     this.config.loadEntity = id => this.deviceProfileService.getDeviceProfile(id.id);
-    this.config.saveEntity = deviceProfile => this.deviceProfileService.saveDeviceProfile(deviceProfile);
+    this.config.saveEntity = (deviceProfile, originDeviceProfile) =>
+      this.deviceProfileService.saveDeviceProfileAndConfirmOtaChange(originDeviceProfile, deviceProfile);
     this.config.deleteEntity = id => this.deviceProfileService.deleteDeviceProfile(id.id);
     this.config.onEntityAction = action => this.onDeviceProfileAction(action);
     this.config.deleteEnabled = (deviceProfile) => deviceProfile && !deviceProfile.default;
@@ -149,7 +151,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       }
     );
@@ -169,7 +171,7 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
         if (res) {
           this.deviceProfileService.setDefaultDeviceProfile(deviceProfile.id.id).subscribe(
             () => {
-              this.config.table.updateData();
+              this.config.updateData();
             }
           );
         }
@@ -177,11 +179,19 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
     );
   }
 
+  private openDeviceProfile($event: Event, deviceProfile: DeviceProfile) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const url = this.router.createUrlTree(['deviceProfiles', deviceProfile.id.id]);
+    this.router.navigateByUrl(url);
+  }
+
   importDeviceProfile($event: Event) {
     this.importExport.importDeviceProfile().subscribe(
       (deviceProfile) => {
         if (deviceProfile) {
-          this.config.table.updateData();
+          this.config.updateData();
         }
       }
     );
@@ -196,6 +206,9 @@ export class DeviceProfilesTableConfigResolver implements Resolve<EntityTableCon
 
   onDeviceProfileAction(action: EntityAction<DeviceProfile>): boolean {
     switch (action.action) {
+      case 'open':
+        this.openDeviceProfile(action.event, action.entity);
+        return true;
       case 'setDefault':
         this.setDefaultDeviceProfile(action.event, action.entity);
         return true;

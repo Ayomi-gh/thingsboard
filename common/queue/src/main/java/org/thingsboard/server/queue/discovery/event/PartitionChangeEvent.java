@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2021 The Thingsboard Authors
+ * Copyright © 2016-2022 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
+import lombok.ToString;
 import org.thingsboard.server.common.msg.queue.ServiceQueueKey;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Set;
 
-
+@ToString(callSuper = true)
 public class PartitionChangeEvent extends TbApplicationEvent {
 
     private static final long serialVersionUID = -8731788167026510559L;
